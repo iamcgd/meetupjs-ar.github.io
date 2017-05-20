@@ -94,6 +94,9 @@ Vue.component('month', {
 
                 if (currentDay.isAfter(today, 'day')) {
                     remainingDays.push({
+                        events: this.monthlyCalendar.events.filter(event => {
+                            return event.date.isSame(currentDay, 'day')
+                        }),
                         name: currentDay.format('dddd'),
                         number: currentDay.format('DD')
                     })
@@ -120,8 +123,11 @@ Vue.component('month', {
     template: `
         <div class="b--black-10 br bt bw1 flex flex-wrap">
             <empty-box v-for="day in this.lastMonthDaysOnFirstWeek"></empty-box>
-            <passed-day v-for="day in this.passedDays" v-bind:day="day"></passed-day>
-            <today v-for="day in this.today" v-bind:day="day"></today>
+            <passed-day v-for="day in this.passedDays"
+                v-bind:day="day">
+            </passed-day>
+            <today v-for="day in this.today"
+                v-bind:day="day"></today>
             <remaining-day v-for="day in this.remainingDays" v-bind:day="day"></remaining-day>
             <empty-box v-for="day in this.nextMonthDaysOnLastWeek"></empty-box>
         </div>
@@ -144,16 +150,34 @@ Vue.component('passed-day', {
 })
 
 Vue.component('remaining-day', {
+    methods: {
+        showModal (events) {
+            // eslint-disable-next-line
+            console.log(events)
+        }
+    },
     props: ['day'],
     template: `
-        <div class="b--black-10 bb bl bw1 dn db-l h4-l ph3 pv2 pa2-l w-100 w-one-seventh-l">
-            <div class="flex flex-column-l h-100 items-center items-end-l">
-                <div class="flex-auto-l order-1 order-0-l pl3 pl0-l w-80 w-100-l"></div>
-                <div class="tc tr-l w-20 w-100-l">
-                    <span class="black-30 f3">{{day.number}}</span>
-                    <span class="black-30 db dn-l f6 ttc">{{day.name}}</span>
+        <div v-bind:class="['b--black-10 bb bl bw1 h4-l ph3 pv2 pa2-l w-100 w-one-seventh-l', day.events.length ? 'pointer' : '']"
+            v-on:click="showModal(day.events)">
+                <div class="flex flex-column-l h-100 items-center items-end-l">
+                    <div class="flex-auto-l order-1 order-0-l pl3 pl0-l w-80 w-100-l">
+                        <ul class="list ma0 pl0">
+                            <li v-for="(event, index) in day.events"
+                                v-bind:class="['b--black-30 ba br1 bw1 f6 mv2 pa1 text-shadow-1 truncate white', index > 1 ? 'dn-l' : '']"
+                                v-bind:style="{ 'background-color': event.color }">
+                                    {{event.eventName}}
+                            </li>
+                        </ul>
+                        <span v-bind:class="['black-30 dn f6 mt2 truncate', day.events.length > 2 ? 'db-l' : '']">
+                            y {{day.events.length -2}} más
+                        </span>
+                    </div>
+                    <div class="tc tr-l w-20 w-100-l">
+                        <span class="black-30 f3">{{day.number}}</span>
+                        <span class="black-30 db dn-l f6 ttc">{{day.name}}</span>
+                    </div>
                 </div>
-            </div>
         </div>
     `
 })
@@ -161,7 +185,7 @@ Vue.component('remaining-day', {
 Vue.component('today', {
     props: ['day'],
     template: `
-        <div class="b--black-10 bb bg-washed-green bl bw1 dn db-l h4-l ph3 pv2 pa2-l w-100 w-one-seventh-l">
+        <div class="b--black-10 bb bg-washed-green bl bw1 h4-l ph3 pv2 pa2-l w-100 w-one-seventh-l">
             <div class="flex flex-column-l h-100 items-center items-end-l">
                 <div class="flex-auto-l order-1 order-0-l pl3 pl0-l w-80 w-100-l"></div>
                 <div class="tc tr-l w-20 w-100-l">
@@ -187,7 +211,7 @@ Vue.component('weekdays', {
 })
 
 const app = new Vue({
-    created() {
+    created () {
         this.fetchData()
     },
     data () {
@@ -196,11 +220,22 @@ const app = new Vue({
         }
     },
     methods: {
-        fetchData() {
+        fetchData () {
             // fetch(process.env.CALENDAR_API)
-            fetch('http://calendar-api.now.sh/')
+            fetch('calendar.json')
                 .then(response => response.json())
-                .then(monthlyCalendars => this.monthlyCalendars = monthlyCalendars)
+                .then(this.formatData)
+        },
+        formatData (monthlyCalendars) {
+            this.monthlyCalendars = monthlyCalendars.map(monthlyCalendar => {
+                return Object.assign(monthlyCalendar, {
+                    events: monthlyCalendar.events.map(event => {
+                        return Object.assign(event, {
+                            date: moment(event.date).utc()
+                        })
+                    })
+                })
+            })
         }
     },
     template: `
