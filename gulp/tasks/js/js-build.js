@@ -30,7 +30,7 @@ module.exports = function (config) {
                             presets: ['latest']
                         }),
                         envify({
-                            CALENDAR_API: config.isProduction ? 'https://calendar-api.now.sh/' : 'http://localhost:4000/'
+                            CALENDAR_API: config.isProduction ? 'https://calendar-api.now.sh/' : 'calendar.json'
                         })
                     ]
                 })

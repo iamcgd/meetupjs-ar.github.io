@@ -4,10 +4,7 @@ const Vue = require('vue')
 require('moment/locale/es')
 
 Vue.component('empty-box', {
-    template: `
-        <div class="b--black-10 bb bg-near-white bl bw1 dn db-l w-one-seventh-l">
-        </div>
-    `
+    template: '<div class="b--black-10 bb bg-near-white bl bw1 dn db-l w-one-seventh-l"></div>'
 })
 
 Vue.component('heading', {
@@ -127,8 +124,11 @@ Vue.component('month', {
                 v-bind:day="day">
             </passed-day>
             <today v-for="day in this.today"
-                v-bind:day="day"></today>
-            <remaining-day v-for="day in this.remainingDays" v-bind:day="day"></remaining-day>
+                v-bind:day="day">
+            </today>
+            <remaining-day v-for="day in this.remainingDays"
+                v-bind:day="day">
+            </remaining-day>
             <empty-box v-for="day in this.nextMonthDaysOnLastWeek"></empty-box>
         </div>
     `
@@ -151,9 +151,8 @@ Vue.component('passed-day', {
 
 Vue.component('remaining-day', {
     methods: {
-        showModal (events) {
-            // eslint-disable-next-line
-            console.log(events)
+        showModal: function (events) {
+            if (events.length) this.$root.$emit('openModal', events)
         }
     },
     props: ['day'],
@@ -170,7 +169,7 @@ Vue.component('remaining-day', {
                             </li>
                         </ul>
                         <span v-bind:class="['black-30 dn f6 mt2 truncate', day.events.length > 2 ? 'db-l' : '']">
-                            y {{day.events.length -2}} más
+                            y {{day.events.length - 2}} más
                         </span>
                     </div>
                     <div class="tc tr-l w-20 w-100-l">
@@ -205,7 +204,10 @@ Vue.component('weekdays', {
     },
     template: `
         <div class="b--black-10 bl bt bw1 dn flex-l">
-            <div v-for="weekday in weekdays" class="b--black-10 bg-white black-alternative br bw1 pv3 tc ttc w-one-seventh-l">{{weekday}}</div>
+            <div v-for="weekday in weekdays"
+                class="b--black-10 bg-white black-alternative br bw1 pv3 tc ttc w-one-seventh-l">
+                    {{weekday}}
+            </div>
         </div>
     `
 })
@@ -213,6 +215,11 @@ Vue.component('weekdays', {
 const app = new Vue({
     created () {
         this.fetchData()
+
+        this.$on('openModal', (events) => {
+            // eslint-disable-next-line
+            console.log(events)
+        })
     },
     data () {
         return {
@@ -221,8 +228,7 @@ const app = new Vue({
     },
     methods: {
         fetchData () {
-            // fetch(process.env.CALENDAR_API)
-            fetch('calendar.json')
+            fetch(process.env.CALENDAR_API)
                 .then(response => response.json())
                 .then(this.formatData)
         },
@@ -240,10 +246,11 @@ const app = new Vue({
     },
     template: `
         <div v-if="monthlyCalendars">
-            <div v-for="monthlyCalendar in monthlyCalendars" class="fadeIn mb5">
-                <heading v-bind:content="monthlyCalendar.when.month + ' ' +  monthlyCalendar.when.year"></heading>
-                <weekdays></weekdays>
-                <month v-bind:monthly-calendar="monthlyCalendar"></month>
+            <div v-for="monthlyCalendar in monthlyCalendars"
+                class="fadeIn mb5">
+                    <heading v-bind:content="monthlyCalendar.when.month + ' ' +  monthlyCalendar.when.year"></heading>
+                    <weekdays></weekdays>
+                    <month v-bind:monthly-calendar="monthlyCalendar"></month>
             </div>
         </div>
     `
