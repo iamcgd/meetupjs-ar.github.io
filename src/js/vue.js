@@ -12,6 +12,63 @@ Vue.component('heading', {
     template: '<h2 class="f4 f3-ns mb4 mt0 normal silver tc ttc">{{content}}</h2>'
 })
 
+Vue.component('modal', {
+    computed: {
+        today: function () {
+            return this.events[0].date.format('dddd DD')
+        }
+    },
+    props: ['events'],
+    template: `
+        <div class="bg-black-70 fixed flex items-center justify-center left-0 top-0 vh-100 w-100 z-1">
+            <div class="center mw6 relative w-100 z-2">
+                <div class="bg-white br2 ma3">
+                    <div class="b--black-10 bb bg-washed-yellow br--top br2 bw1 flex items-center justify-between pa3">
+                        <div class="flex items-center">
+                            <i class="black-20 material-icons mr2">event</i>
+                            <span class="b black-alternative dib f4 f3-ns ttc">{{today}}</span>
+                        </div>
+                        <a href="#!"
+                            class="black-alternative dib f4 f3-ns grow link"
+                            v-on:click.prevent="$emit('close')">
+                                ✕
+                        </a>
+                    </div>
+                    <div style="max-height: 75vh; overflow-y: auto;">
+                        <div id="modal-content">
+                            <div v-for="event in this.events">
+                                <div class="flex mh3 mv3 pv3">
+                                    <div class="w-30 w-20-ns">
+                                        <p class="black-30 f4 f3-ns mv0">{{event.date.format('HH:mm')}}</p>
+                                    </div>
+                                    <div class="w-70 w-80-ns">
+                                        <h3 class="f4 f3-ns mv0"
+                                            v-bind:style="{ 'color': event.color }">
+                                                {{event.eventName}}
+                                        </h3>
+                                        <p v-bind:class="['black-50 mb0 mt2', event.place ? '' : 'dn']">
+                                            {{event.place}}
+                                        </p>
+                                        <div class="flex">
+                                            <a v-bind:href="event.eventLink"
+                                                target="_blank"
+                                                class="b b--black-30 ba br1 bw1 dib f6 flex grow items-center link mt3 ph3 pv2 ttu white"
+                                                    v-bind:style="{ 'background-color': event.color }">
+                                                        <i class="b black-20 f5 material-icons mr1">link</i>
+                                                        <span class="text-shadow-1">Link</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `
+})
+
 Vue.component('month', {
     computed: {
         currentMonth: function () {
@@ -217,13 +274,14 @@ const app = new Vue({
         this.fetchData()
 
         this.$on('openModal', (events) => {
-            // eslint-disable-next-line
-            console.log(events)
+            this.modalEvents = events
+            this.showModal = true
         })
     },
     data () {
         return {
-            monthlyCalendars: null
+            monthlyCalendars: null,
+            showModal: false
         }
     },
     methods: {
@@ -252,6 +310,10 @@ const app = new Vue({
                     <weekdays></weekdays>
                     <month v-bind:monthly-calendar="monthlyCalendar"></month>
             </div>
+            <modal v-if="showModal"
+                v-bind:events="modalEvents"
+                v-on:close="showModal= false">
+            </modal>
         </div>
     `
 })
